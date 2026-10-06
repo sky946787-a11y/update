@@ -1,19 +1,17 @@
 'use strict';
 
+/*
+ * ============================================================
+ * OLD CODE — EmergencyModal has been REMOVED from the PRE workflow.
+ * Emergency registration/triage is no longer part of the PRE workflow.
+ * This entire file is commented out and kept for reference only.
+ * ============================================================
+
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../../api/index.js';
 import { toast } from '../../components/feedback/feedback.js';
 
-/**
- * Ported from #emergencyModal plus openEmergencyModal /
- * submitEmergencyRegistration in PRE/js/emergency.js.
- *
- * The submit is a three-call chain and the order matters: optionally create the
- * patient, then the pre-request, then a CRITICAL bed request referencing it.
- * Age is converted to an approximate DOB of "<currentYear - age>-01-01",
- * exactly as before.
- */
 const DEPARTMENTS = [
   'Emergency Medicine',
   'Trauma & Surgery',
@@ -215,3 +213,4 @@ export default function EmergencyModal({ open, patients, doctors, onClose, onCha
   );
 }
 
+*/

@@ -315,7 +315,6 @@ export default function AppointmentPage() {
                   <option value="Consultation">Consultation (OPD)</option>
                   <option value="Admit">Admission Referral (IPD)</option>
                   <option value="Follow-Up">Follow-Up Review</option>
-                  <option value="Emergency">Emergency Triage</option>
                 </select>
               </div>
 

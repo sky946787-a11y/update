@@ -8,19 +8,7 @@ import { toast } from '../components/feedback/feedback.js';
 
 const REDIRECT_DELAY_MS = 1100;
 
-/**
- * Replaces shared/auth-guard.js plus RoleAccess.enforceModuleAccess.
- *
- * Legacy behaviour, preserved:
- *  - no session at all -> straight to the login page, no message;
- *  - signed in but wrong actor for this portal -> show the snackbar, leave it
- *    on screen for 1100ms, then redirect to that actor's own home. The delay
- *    existed so the message was readable instead of being wiped by a native
- *    alert; it is not incidental.
- *
- * window.APP_MODULE and the window.PatientSession it used to build are gone
- * (DEC-8): the module is a prop, and patient identity comes from the session.
- */
+
 export default function RequireModule({ module: moduleName, children }) {
   const { isAuthenticated, actor, hasModuleAccess } = useSession();
   const navigate = useNavigate();
@@ -32,10 +20,7 @@ export default function RequireModule({ module: moduleName, children }) {
   useEffect(() => {
     if (!isAuthenticated || allowed) return undefined;
     setDenied(true);
-    // The snackbar is shown once; the redirect is scheduled on every run. In
-    // StrictMode the effect runs, is cleaned up, then runs again - guarding the
-    // timeout behind the same ref as the toast would clear the first timer and
-    // never set a second, leaving the denied route stuck on a blank page.
+    
     if (!firedRef.current) {
       firedRef.current = true;
       toast('Access denied — ' + actor + ' cannot open the ' + moduleName + ' module.', 'error');

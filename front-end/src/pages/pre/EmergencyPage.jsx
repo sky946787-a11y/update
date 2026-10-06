@@ -1,5 +1,13 @@
 'use strict';
 
+/*
+ * ============================================================
+ * OLD CODE — Emergency has been REMOVED from the PRE workflow.
+ * The PRE Dashboard now only has: Follow Up and Admitted.
+ * This entire file is commented out and kept for reference only.
+ * The /PRE/pages/emergency.html route now redirects to the dashboard.
+ * ============================================================
+
 import { useState } from 'react';
 import { api } from '../../api/index.js';
 import { useApi } from '../../hooks/useApi.js';
@@ -8,17 +16,6 @@ import { toast } from '../../components/feedback/feedback.js';
 import { joinPreRequestsWithPatients, formatDate, to12Hour } from './preHelpers.js';
 import EmergencyModal from './EmergencyModal.jsx';
 
-/**
- * Ported from PRE/pages/emergency.html + emergency.js.
- *
- * One incidental fix comes free here. The legacy "Request Bed from HOM" button
- * was built as an onclick string that interpolated escapeHtml(department) into
- * a JS string literal inside an HTML attribute; escapeHtml turns an apostrophe
- * into &#39;, which the HTML parser decodes back to ' before JS parses it, so a
- * department containing an apostrophe broke the handler. As a closure, that
- * whole class of bug disappears - one of the three accepted invisible fixes in
- * section 7 of the migration plan.
- */
 export default function EmergencyPage() {
   useDocumentTitle('Emergency Cases – Federico PRE');
 
@@ -226,3 +223,4 @@ export default function EmergencyPage() {
   );
 }
 
+*/

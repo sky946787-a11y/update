@@ -1,27 +1,37 @@
 'use strict';
 
+import { useState } from 'react';
 import { api } from '../../api/index.js';
 import { useApi } from '../../hooks/useApi.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { Link } from 'react-router-dom';
 import { toast } from '../../components/feedback/feedback.js';
 import { joinPreRequestsWithPatients, formatDate, to12Hour } from './preHelpers.js';
+import BedRequestModal from './BedRequestModal.jsx';
 
 /**
  * Ported from PRE/pages/PRE.html + PRE.js.
  *
- * The visit-type <select> per row calls POST /pre-requests/:id/check-in, which
- * is what actually creates the OPD ledger or dispatches the bed request.
+ * NEW WORKFLOW: Each approved patient row now shows two action buttons:
+ *   - Follow Up: completes the visit as an OPD follow-up (normal discharge flow).
+ *   - Admitted: opens the existing Bed Request form → Dispatch → Pending → HOM assigns bed → ADMITTED.
+ *
+ * OLD WORKFLOW (commented out — no longer active):
+ * The visit-type <select> per row called POST /pre-requests/:id/check-in, which
+ * created the OPD ledger or dispatched the bed request based on the selected type.
  */
 export default function PreDashboardPage() {
   useDocumentTitle('Dashboard');
+  const [bedRequestId, setBedRequestId] = useState(null);
 
   const { data, reload } = useApi(async () => {
-    const [preRequests, patients, doctors, admissions] = await Promise.all([
+    const [preRequests, patients, doctors, admissions, wards, bedRequests] = await Promise.all([
       api.preRequests.list().catch(() => []),
       api.patients.list().catch(() => []),
       api.doctors.list().catch(() => []),
       api.admissions.list().catch(() => []),
+      api.wards.list().catch(() => []),
+      api.wards.bedRequests.list().catch(() => []),
     ]);
 
     const doctorsById = {};
@@ -40,11 +50,19 @@ export default function PreDashboardPage() {
       return { ...r, isPaid: Boolean(adm && (adm.status === 'PAYMENT_CONFIRMED' || adm.bills_cleared === true)) };
     });
 
-    return { rows, all: preRequests || [] };
+    return { rows, all: preRequests || [], wards: wards || [], bedRequests: bedRequests || [] };
   }, []);
 
   const rows = data?.rows || [];
   const all = data?.all || [];
+  const wards = data?.wards || [];
+  const bedRequests = data?.bedRequests || [];
+  const pendingBedRequestIds = new Set(
+    bedRequests
+      .filter((r) => r.status === 'PENDING')
+      .map((r) => r.pre_request_id)
+      .filter(Boolean),
+  );
 
   const counters = {
     pending: all.filter((r) => r.status === 'PENDING').length,
@@ -57,23 +75,17 @@ export default function PreDashboardPage() {
   const approved = rows.filter((r) => {
     if (['REJECTED', 'DISCHARGED'].includes(r.status)) return false;
     if (r.status === 'ADMITTED') return false;
-    if (r.status === 'CONSULTATION_DONE' && r.isPaid) return false;
-    return ['APPROVED', 'CONSULTATION_DONE', 'EMERGENCY'].includes(r.status);
+    if (r.status === 'CONSULTATION_DONE') return false;
+    return r.status === 'APPROVED';
   });
 
-  async function setVisitType(id, value) {
-    if (!value) return;
+  async function completeFollowUp(id) {
     try {
-      await api.preRequests.checkIn(id, { visit_type: value });
-      if (value === 'OPD' || value === 'Consultation') {
-        toast('Patient checked in for Outpatient Consultation. Ledger created in FA.', 'success');
-      } else if (value === 'Admit') {
-        toast('Marked for Inpatient Admission — Bed request dispatched to HOM.', 'success');
-      } else if (value === 'Emergency') {
-        toast('Marked for Emergency Triage — Bed request dispatched to HOM.', 'success');
-      }
+      await api.preRequests.checkIn(id, { visit_type: 'OPD' });
+      await api.preRequests.update(id, { visit_type: 'Follow-Up' });
+      toast('Follow up completed and patient record updated.', 'success');
     } catch (err) {
-      toast(err.message || 'Could not update visit type', 'error');
+      toast(err.message || 'Could not complete follow up', 'error');
     }
     await reload();
   }
@@ -100,7 +112,7 @@ export default function PreDashboardPage() {
           <thead>
             <tr>
               <th>Patient ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Department</th>
-              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Visit Type</th><th>Set Visit</th>
+              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Status</th><th>Action</th>
             </tr>
           </thead>
           <tbody id="approvedTable">
@@ -112,26 +124,12 @@ export default function PreDashboardPage() {
               </tr>
             ) : (
               approved.map((r) => {
-                const isAdmitRequested = r.visit_type === 'Admit' || r.visit_type === 'Inpatient';
-                const isEmergency = r.status === 'EMERGENCY' || r.visit_type === 'Emergency';
+                const hasPendingBedRequest = pendingBedRequestIds.has(r.pre_request_id);
 
                 let statusBadge = <span className="badge badge-neutral">Scheduled</span>;
-                if (r.status === 'CONSULTATION_DONE') {
-                  statusBadge = r.isPaid ? (
-                    <span className="badge badge-success">Completed &amp; Paid</span>
-                  ) : (
-                    <span className="badge badge-warning" style={{ background: '#fff3e0', color: '#e65100' }}>
-                      OPD Checked-In (Awaiting Payment)
-                    </span>
-                  );
-                } else if (isAdmitRequested) {
-                  statusBadge = <span className="badge badge-info">IPD Bed Requested</span>;
-                } else if (isEmergency) {
-                  statusBadge = <span className="badge badge-warning">Emergency</span>;
+                if (hasPendingBedRequest) {
+                  statusBadge = <span className="badge badge-info">Pending Bed Request</span>;
                 }
-
-                const selectedValue =
-                  r.status === 'CONSULTATION_DONE' ? 'OPD' : isAdmitRequested ? 'Admit' : isEmergency ? 'Emergency' : '';
 
                 return (
                   <tr key={r.pre_request_id}>
@@ -145,17 +143,18 @@ export default function PreDashboardPage() {
                     <td>{to12Hour(r.requested_time) || '-'}</td>
                     <td>{statusBadge}</td>
                     <td>
-                      <select
-                        className="custom-select"
-                        value={selectedValue}
-                        onChange={(e) => setVisitType(r.pre_request_id, e.target.value)}
-                        style={{ padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid var(--color-border)', background: '#fff', minWidth: 170 }}
-                      >
-                        <option value="">-- Set / Change Visit --</option>
-                        <option value="OPD">Consultation (OPD)</option>
-                        <option value="Admit">Admit (Request Bed {'→'} HOM)</option>
-                        <option value="Emergency">Emergency Triage</option>
-                      </select>
+                      {hasPendingBedRequest ? (
+                        <span style={{ color: 'var(--color-muted-fg)', fontSize: 12 }}>Awaiting HOM</span>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button className="btn suggest" type="button" onClick={() => completeFollowUp(r.pre_request_id)}>
+                            Follow Up
+                          </button>
+                          <button className="btn approve" type="button" onClick={() => setBedRequestId(r.pre_request_id)}>
+                            Admitted
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -164,6 +163,13 @@ export default function PreDashboardPage() {
           </tbody>
         </table>
       </div>
+
+      <BedRequestModal
+        request={approved.find((r) => r.pre_request_id === bedRequestId) || null}
+        wards={wards}
+        onClose={() => setBedRequestId(null)}
+        onSubmitted={reload}
+      />
     </>
   );
 }

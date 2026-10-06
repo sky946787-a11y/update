@@ -6,17 +6,16 @@ import { useApi } from '../../hooks/useApi.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { formatAge } from './preHelpers.js';
 import Patient360Modal from './Patient360Modal.jsx';
-import RegisterPatientModal from './RegisterPatientModal.jsx';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
 /**
  * Ported from PRE/pages/patient-records.html + patient-records.js.
  *
- * The status ladder is eight branches deep and order-sensitive - inpatient
- * first, then emergency, bed-requested, scheduled, pending intake, OPD
- * completed, discharged, and finally "any encounter at all". Reordering it
- * changes which badge a patient shows.
+ * The status ladder is order-sensitive - inpatient first, then pending
+ * bed request, discharge/follow-up states, scheduled work, pending intake,
+ * completed OPD, and finally "any encounter at all". Reordering it changes
+ * which badge a patient shows.
  */
 export default function PatientRecordsPage() {
   useDocumentTitle('Patient Directory & Records – Federico PRE');
@@ -24,10 +23,9 @@ export default function PatientRecordsPage() {
   const [query, setQuery] = useState('');
   const [bloodFilter, setBloodFilter] = useState('');
   const [detailId, setDetailId] = useState(null);
-  const [registerOpen, setRegisterOpen] = useState(false);
 
-  const { data, error, reload } = useApi(async () => {
-    const [patients, insurances, preRequests, appointments, admissions, beds, doctors] = await Promise.all([
+  const { data, error } = useApi(async () => {
+    const [patients, insurances, preRequests, appointments, admissions, beds, doctors, bedRequests] = await Promise.all([
       api.patients.list().catch(() => []),
       api.patients.insuranceAll().catch(() => []),
       api.preRequests.list().catch(() => []),
@@ -35,6 +33,7 @@ export default function PatientRecordsPage() {
       api.admissions.list().catch(() => []),
       api.wards.beds().catch(() => []),
       api.doctors.list().catch(() => []),
+      api.wards.bedRequests.list().catch(() => []),
     ]);
 
     const doctorsById = {};
@@ -56,6 +55,9 @@ export default function PatientRecordsPage() {
     const preByPatient = group(preRequests, 'patient_id');
     const aptByPatient = group(appointments, 'patient_id');
     const admByPatient = group(admissions, 'patient_id');
+    const pendingBedPatientIds = new Set(
+      (bedRequests || []).filter((r) => r.status === 'PENDING').map((r) => r.patient_id),
+    );
 
     const rows = (patients || []).map((p) => {
       const pInsur = insurancesByPatient[p.patient_id] || null;
@@ -82,9 +84,13 @@ export default function PatientRecordsPage() {
         insurance: pInsur,
         activeBed,
         isInpatient: activeInpatient,
-        pendingBedRequest: pPres.some((pr) => pr.status === 'APPROVED' && (pr.visit_type === 'Admit' || pr.visit_type === 'Inpatient')),
-        hasEmergency: pPres.some((pr) => pr.status === 'EMERGENCY' || pr.visit_type === 'Emergency') || pAdms.some((a) => a.status === 'EMERGENCY'),
+        /* OLD: pendingBedRequest also checked old visit_type values ('Admit'/'Inpatient').
+           The new workflow uses the Bed Request table (pendingBedPatientIds) exclusively.
+        pendingBedRequest: pendingBedPatientIds.has(p.patient_id) || pPres.some((pr) => pr.status === 'APPROVED' && (pr.visit_type === 'Admit' || pr.visit_type === 'Inpatient')),
+        */
+        pendingBedRequest: pendingBedPatientIds.has(p.patient_id),
         hasDischarged: !activeInpatient && (pPres.some((pr) => pr.status === 'DISCHARGED') || pAdms.some((a) => a.status === 'DISCHARGED')),
+        hasFollowUp: pPres.some((pr) => pr.status === 'CONSULTATION_DONE' && pr.visit_type === 'Follow-Up'),
         hasScheduled: pPres.some((pr) => pr.status === 'APPROVED' || pr.status === 'CONFIRMED') || pApts.some((apt) => apt.status === 'CONFIRMED' || apt.status === 'SCHEDULED'),
         hasPendingIntake: pPres.some((pr) => pr.status === 'PENDING'),
         hasConsultationDone: pPres.some((pr) => pr.status === 'CONSULTATION_DONE') || pApts.some((apt) => apt.status === 'COMPLETED'),
@@ -125,12 +131,12 @@ export default function PatientRecordsPage() {
 
   function statusBadge(p) {
     if (p.isInpatient) return chip('#e0f2fe', '#0369a1', '#bae6fd', 600, 'Inpatient (' + (p.activeBed ? p.activeBed.bed_number : 'Bed Assigned') + ')');
-    if (p.hasEmergency) return chip('#fee2e2', '#b91c1c', '#fca5a5', 600, 'Emergency');
-    if (p.pendingBedRequest) return chip('#fef3c7', '#92400e', '#fde68a', 600, 'Bed Requested');
+    if (p.pendingBedRequest) return chip('#fef3c7', '#92400e', '#fde68a', 600, 'Pending');
+    if (p.hasDischarged) return chip('#f1f5f9', '#475569', '#cbd5e1', 400, 'Discharged');
+    if (p.hasFollowUp) return chip('#dcfce7', '#15803d', '#bbf7d0', 400, 'Follow Up');
     if (p.hasScheduled) return chip('#f3e8ff', '#6b21a8', '#d8b4fe', 600, 'Scheduled');
     if (p.hasPendingIntake) return chip('#fef9c3', '#854d0e', '#fef08a', 400, 'Pending Request');
     if (p.hasConsultationDone) return chip('#dcfce7', '#15803d', '#bbf7d0', 400, 'Completed (OPD)');
-    if (p.hasDischarged) return chip('#f1f5f9', '#475569', '#cbd5e1', 400, 'Discharged');
     if (p.totalEncounters > 0) return chip('#dcfce7', '#15803d', '#bbf7d0', 400, 'Outpatient');
     return chip('#f1f5f9', '#475569', '#e2e8f0', 400, 'Registered');
   }
@@ -156,9 +162,6 @@ export default function PatientRecordsPage() {
               <option value="">All Blood Groups</option>
               {BLOOD_GROUPS.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
-            <button className="btn blue directory-action-btn" id="btnRegisterPatient" type="button" onClick={() => setRegisterOpen(true)}>
-              + Register New Patient
-            </button>
           </div>
         </div>
 
@@ -241,8 +244,6 @@ export default function PatientRecordsPage() {
         bedsById={data?.bedsById || {}}
         onClose={() => setDetailId(null)}
       />
-
-      <RegisterPatientModal open={registerOpen} onClose={() => setRegisterOpen(false)} onChanged={reload} />
     </>
   );
 }

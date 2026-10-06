@@ -3,15 +3,7 @@
 import { ApiError, extractMessage } from './errors.js';
 import { getSession, clearSession } from './session.js';
 
-/**
- * Low-level fetch wrapper, ported from shared/api-client.js#request.
- *
- * Deliberately unchanged: the 15s abort timeout and its two error strings, the
- * `credentials: 'include'` (the backend also sets an HttpOnly sessionId cookie
- * alongside the Bearer token), the 401 -> clearSession side effect, and the
- * `{success, data}` envelope unwrap. The current backend never sends that
- * envelope, but removing the branch would be a behaviour change.
- */
+
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location && window.location.port === '3000'

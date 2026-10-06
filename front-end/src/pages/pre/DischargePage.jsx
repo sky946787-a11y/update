@@ -72,7 +72,7 @@ export default function DischargePage() {
       <td>{formatDate(r.requested_date)}</td>
       <td>{to12Hour(r.requested_time) || '-'}</td>
       <td>{r.bedNumber}</td>
-      <td>{r.visit_type || '-'}</td>
+      <td>{r.status === 'CONSULTATION_DONE' && r.visit_type === 'Follow-Up' ? 'Follow Up' : r.status}</td>
     </>
   );
 
@@ -84,7 +84,7 @@ export default function DischargePage() {
           <thead>
             <tr>
               <th>Patient ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Department</th>
-              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Bed No</th><th>Visit Type</th><th>Status</th>
+              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Bed No</th><th>Patient Status</th><th>HOM Status</th>
             </tr>
           </thead>
           <tbody id="dischargeTable">
@@ -108,7 +108,7 @@ export default function DischargePage() {
           <thead>
             <tr>
               <th>Patient ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Department</th>
-              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Bed No</th><th>Visit Type</th><th>Status</th><th>Action</th>
+              <th>Doctor</th><th>Appointment Date</th><th>Appointment Time</th><th>Bed No</th><th>Patient Status</th><th>Clearance</th><th>Action</th>
             </tr>
           </thead>
           <tbody id="approvedDischargeTable">

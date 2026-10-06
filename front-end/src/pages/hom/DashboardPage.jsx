@@ -63,9 +63,9 @@ function parseOperationalLog(log) {
     title = 'Inpatient admission confirmed for Pre-request #' + (meta.preRequestId || '');
     subtitle = 'Patient active under hospital ward care';
   } else if (/Emergency/i.test(text)) {
-    category = 'EMERGENCY ADMISSION';
+    category = 'ADMISSION';
     badgeVariant = 'error';
-    subtitle = 'High-priority emergency walk-in registered';
+    subtitle = 'High-priority walk-in registered';
   } else if (/denied/i.test(text)) {
     category = 'REQUEST DENIED';
     badgeVariant = 'error';

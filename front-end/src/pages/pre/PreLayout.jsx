@@ -19,7 +19,6 @@ import componentsCss from '../../styles/pre/components.css?inline';
  */
 const LINKS = [
   { href: '/PRE/pages/PRE.html', label: 'Dashboard' },
-  { href: '/PRE/pages/emergency.html', label: 'Emergency cases', module: 'ADMISSIONS' },
   { href: '/PRE/pages/patient-records.html', label: 'Patient record', module: 'PATIENT' },
   { href: '/PRE/pages/doctor.html', label: 'Doctor availability', module: 'DOCTOR' },
   { href: '/PRE/pages/appointment.html', label: 'Create Appointment', module: 'APPOINTMENTS' },

@@ -1,24 +1,24 @@
 'use strict';
 
+/*
+ * ============================================================
+ * OLD CODE — RegisterPatientModal has been REMOVED from the PRE workflow.
+ * The "+ Register" button from the Patient Record (Patient Directory) section
+ * has been removed. Patient registration via this modal is no longer used
+ * in the PRE Patient Records page.
+ * This entire file is commented out and kept for reference only.
+ * ============================================================
+
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../../api/index.js';
 import { toast } from '../../components/feedback/feedback.js';
 
-/**
- * Ported from #registerPatientModal plus validateRegisterPatient /
- * submitRegisterPatient in PRE/js/patient-records.js.
- *
- * Two behaviours are deliberate and preserved: no fabricated fallback address
- * or coverage limit is injected, and if the insurance policy (or its card
- * uploads) fails, the patient record still stands and only a warning is shown.
- */
 const BLANK = {
   name: '', dob: '', gender: 'Male', bloodGroup: 'O+', phone: '', altPhone: '', address: '',
   insProvider: '', insPolicyNo: '', insLimit: '', insType: 'Self',
 };
 
-/** Returns the first failing message, or '' when valid. Wording is verbatim. */
 function validate({ name, dob, gender, phone, altPhone, insProvider, insPolicyNo, insLimit }) {
   if (!name || name.length < 2) return "Enter the patient's full name (at least 2 characters).";
   if (!/^[A-Za-z][A-Za-z .'-]*$/.test(name)) return 'Name may only contain letters, spaces, apostrophes and hyphens.';
@@ -212,12 +212,12 @@ export default function RegisterPatientModal({ open, onClose, onChanged }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 10 }}>
             <label style={{ fontSize: 11, color: 'var(--color-muted-fg)' }}>
-              Insurance card {'—'} front
+              Insurance card — front
               <input type="file" id="regInsCardFront" accept="image/*,.pdf" className="emergency-form-control" style={{ padding: 6 }}
                 onChange={(e) => setFrontFile(e.target.files?.[0] || null)} />
             </label>
             <label style={{ fontSize: 11, color: 'var(--color-muted-fg)' }}>
-              Insurance card {'—'} back
+              Insurance card — back
               <input type="file" id="regInsCardBack" accept="image/*,.pdf" className="emergency-form-control" style={{ padding: 6 }}
                 onChange={(e) => setBackFile(e.target.files?.[0] || null)} />
             </label>
@@ -234,3 +234,5 @@ export default function RegisterPatientModal({ open, onClose, onChanged }) {
     document.body,
   );
 }
+
+*/

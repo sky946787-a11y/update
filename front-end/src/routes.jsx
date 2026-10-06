@@ -39,7 +39,6 @@ const PreRequestsPage = lazy(() => import('./pages/pre/RequestsPage.jsx'));
 const PreRejectedPage = lazy(() => import('./pages/pre/RejectedPage.jsx'));
 const PreAdmittedPage = lazy(() => import('./pages/pre/AdmittedPage.jsx'));
 const PreDischargePage = lazy(() => import('./pages/pre/DischargePage.jsx'));
-const PreEmergencyPage = lazy(() => import('./pages/pre/EmergencyPage.jsx'));
 const PrePatientRecordsPage = lazy(() => import('./pages/pre/PatientRecordsPage.jsx'));
 const PreDoctorRosterPage = lazy(() => import('./pages/pre/DoctorRosterPage.jsx'));
 const PreAppointmentPage = lazy(() => import('./pages/pre/AppointmentPage.jsx'));
@@ -136,7 +135,9 @@ export const router = createBrowserRouter([
           { path: '/PRE/pages/rejected.html', element: L(<PreRejectedPage />) },
           { path: '/PRE/pages/admitted.html', element: L(<PreAdmittedPage />) },
           { path: '/PRE/pages/discharge.html', element: L(<PreDischargePage />) },
-          { path: '/PRE/pages/emergency.html', element: L(<PreEmergencyPage />) },
+          // OLD: /PRE/pages/emergency.html used to render EmergencyPage.
+          // Emergency has been REMOVED from the PRE workflow. Redirect to dashboard to avoid broken URLs.
+          { path: '/PRE/pages/emergency.html', element: <Navigate to="/PRE/pages/PRE.html" replace /> },
           { path: '/PRE/pages/patient-records.html', element: L(<PrePatientRecordsPage />) },
           { path: '/PRE/pages/doctor.html', element: L(<PreDoctorRosterPage />) },
           { path: '/PRE/pages/hom.html', element: L(<PreHomCoordinationPage />) },

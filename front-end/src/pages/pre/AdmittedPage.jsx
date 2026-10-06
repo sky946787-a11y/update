@@ -22,9 +22,7 @@ export default function AdmittedPage() {
     const bedsById = {};
     beds.forEach((b) => (bedsById[b.bed_id] = b));
 
-    const admitted = joinPreRequestsWithPatients(preRequests, patients, doctorsById).filter(
-      (r) => r.status === 'ADMITTED' && r.visit_type !== 'Emergency',
-    );
+    const admitted = joinPreRequestsWithPatients(preRequests, patients, doctorsById).filter((r) => r.status === 'ADMITTED');
     return { admitted, bedsById };
   }, []);
 

@@ -10,7 +10,7 @@ export const STATUS_LABELS = {
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
   CONSULTATION_DONE: 'Completed',
-  EMERGENCY: 'Emergency',
+  EMERGENCY: 'Pending',
   ADMITTED: 'Admitted',
   DISCHARGE_REQUESTED: 'Discharge Pending',
   DISCHARGE_APPROVED: 'Approved Discharge',
