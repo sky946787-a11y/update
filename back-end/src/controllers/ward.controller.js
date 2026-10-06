@@ -124,7 +124,11 @@ function createBedRequest(req, res) {
 // admission to attach to — a dead end for FA's billing flow. Bed
 // allocation is the natural anchor: it's the moment patient_id + bed_id
 // are both known for certain.
-function updateBedRequest(req, res) {
+// FIX: Added `next` so caught errors are forwarded to Express's global
+// errorHandler instead of being re-thrown from a synchronous handler.
+// A bare `throw` inside a sync Express handler that has no `next` becomes
+// an unhandled exception and crashes the entire Node.js process.
+function updateBedRequest(req, res, next) {
   const existing = wardService
     .findAllBedRequests()
     .find((r) => r.bed_request_id === +req.params.id);
@@ -179,9 +183,8 @@ function updateBedRequest(req, res) {
       // Compensating transaction: roll back bed to AVAILABLE
       wardService.updateBedStatus(result.bed_id, 'AVAILABLE');
       wardService.updateBedRequest(result.bed_request_id, { status: 'PENDING', bed_id: null });
-      // Let the global error handler (middleware/errorHandler.js) format the
-      // response — it duck-types statusCode/message off whatever was thrown.
-      throw err;
+      // Forward to Express global error handler — sends 500 without crashing the process.
+      return next(err);
     }
   }
 

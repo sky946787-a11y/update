@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { maxId } = require('../utils/maxId');
 const dataStore = require('../store/dataStore');
 const organizationService = require('./organization.service');
 const subscriptionService = require('./subscription.service');
@@ -27,9 +28,7 @@ const { MODULE_CODES } = require('../utils/tenant');
 function logStep(organizationId, step, status, message) {
   dataStore.provisioningLog.push({
     id:
-      dataStore.provisioningLog.length > 0
-        ? Math.max(...dataStore.provisioningLog.map((l) => l.id)) + 1
-        : 1,
+      maxId(dataStore.provisioningLog, 'id') + 1 || 1,
     organization_id: Number(organizationId),
     step,
     status,
@@ -90,9 +89,7 @@ function seedDefaultClinicalBaseline(organizationId, hospitalId) {
 function generateApiKey(organizationId, label) {
   const newKey = {
     api_key_id:
-      dataStore.apiKeys.length > 0
-        ? Math.max(...dataStore.apiKeys.map((k) => k.api_key_id)) + 1
-        : 1,
+      maxId(dataStore.apiKeys, 'api_key_id') + 1 || 1,
     organization_id: Number(organizationId),
     label: label || 'Default',
     key: `fed_live_${crypto.randomBytes(18).toString('hex')}`,
@@ -196,9 +193,7 @@ function provision(payload) {
 
   const adminUser = {
     user_id:
-      dataStore.users.length > 0
-        ? Math.max(...dataStore.users.map((u) => u.user_id)) + 1
-        : 101,
+      maxId(dataStore.users, 'user_id') + 1 || 101,
     name: payload.admin_name,
     email: payload.admin_email,
     password_hash: hashPassword(payload.admin_password),

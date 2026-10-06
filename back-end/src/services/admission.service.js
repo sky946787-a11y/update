@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 function findAll() {
   return dataStore.admissions;
@@ -12,10 +13,7 @@ function findOne(id) {
 
 function create(admission) {
   const newAdmission = {
-    admission_id:
-      dataStore.admissions.length > 0
-        ? Math.max(...dataStore.admissions.map((a) => a.admission_id)) + 1
-        : 701,
+    admission_id: maxId(dataStore.admissions, 'admission_id') + 1 || 701,
     patient_id: Number(admission.patient_id),
     appointment_id: admission.appointment_id ? Number(admission.appointment_id) : null,
     bed_id: admission.bed_id ? Number(admission.bed_id) : null,

@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 /**
  * Lightweight audit trail for workflow transitions (login, pre-request
@@ -10,10 +11,7 @@ const dataStore = require('../store/dataStore');
  */
 function log(type, text, meta, organizationId) {
   const entry = {
-    id:
-      dataStore.activityLog.length > 0
-        ? Math.max(...dataStore.activityLog.map((a) => a.id)) + 1
-        : 1,
+    id: maxId(dataStore.activityLog, 'id') + 1,
     type: type || 'info', // 'info' | 'success' | 'warning' | 'error'
     text: text || '',
     meta: meta || null,

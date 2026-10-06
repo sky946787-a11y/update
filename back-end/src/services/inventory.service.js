@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 // INVENTORY_ITEM
 function findAllItems() {
@@ -10,9 +11,7 @@ function findAllItems() {
 function createItem(item) {
   const newItem = {
     item_id:
-      dataStore.inventoryItems.length > 0
-        ? Math.max(...dataStore.inventoryItems.map((i) => i.item_id)) + 1
-        : 10,
+      maxId(dataStore.inventoryItems, 'item_id') + 1 || 10,
     item_name: item.item_name,
     category: item.category || 'General',
     stock_quantity: Number(item.stock_quantity) || 0,
@@ -50,9 +49,7 @@ function findAllRequests() {
 function createRequest(request) {
   const newReq = {
     request_id:
-      dataStore.purchaseRequests.length > 0
-        ? Math.max(...dataStore.purchaseRequests.map((r) => r.request_id)) + 1
-        : 1,
+      maxId(dataStore.purchaseRequests, 'request_id') + 1 || 1,
     item_id: Number(request.item_id),
     quantity: Number(request.quantity) || 1,
     status: request.status || 'PENDING',

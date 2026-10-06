@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 const { MODULE_CODES, BACKFILL_GRANT_MODULES } = require('../utils/tenant');
 const serviceCatalog = require('../config/serviceCatalog');
 const resourceCatalog = require('../config/resourceCatalog');
@@ -29,9 +30,7 @@ function findById(id) {
 function create(payload) {
   const newOrg = {
     organization_id:
-      dataStore.organizations.length > 0
-        ? Math.max(...dataStore.organizations.map((o) => o.organization_id)) + 1
-        : 1,
+      maxId(dataStore.organizations, 'organization_id') + 1 || 1,
     name: payload.name,
     slug: slugify(payload.name),
     status: 'ACTIVE',
@@ -81,9 +80,7 @@ function createHospital(organizationId, payload) {
   const isFirst = hospitalsFor(organizationId).length === 0;
   const newHospital = {
     hospital_id:
-      dataStore.hospitals.length > 0
-        ? Math.max(...dataStore.hospitals.map((h) => h.hospital_id)) + 1
-        : 1,
+      maxId(dataStore.hospitals, 'hospital_id') + 1 || 1,
     organization_id: Number(organizationId),
     name: payload.name,
     city: payload.city || null,

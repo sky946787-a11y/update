@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 function findAll(predicate = null) {
   return predicate ? dataStore.appointments.filter(predicate) : dataStore.appointments;
@@ -29,9 +30,7 @@ function create(appointment) {
 
   const newAppointment = {
     appointment_id:
-      dataStore.appointments.length > 0
-        ? Math.max(...dataStore.appointments.map((a) => a.appointment_id)) + 1
-        : 601,
+      maxId(dataStore.appointments, 'appointment_id') + 1 || 601,
     created_at: new Date().toISOString(),
     patient_id: patientId,
     doctor_id: appointment.doctor_id ? Number(appointment.doctor_id) : null,

@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 const activityService = require('./activity.service');
 const wardService = require('./ward.service');
 
@@ -90,9 +91,7 @@ function create(payload, createdBy) {
     payload.status || (payload.visit_type === 'Emergency' ? 'EMERGENCY' : 'PENDING');
   const newRequest = {
     pre_request_id:
-      dataStore.preRequests.length > 0
-        ? Math.max(...dataStore.preRequests.map((p) => p.pre_request_id)) + 1
-        : 1,
+      maxId(dataStore.preRequests, 'pre_request_id') + 1 || 1,
     patient_id: Number(payload.patient_id),
     appointment_id: payload.appointment_id ? Number(payload.appointment_id) : null,
     department: payload.department,
@@ -240,9 +239,7 @@ function transition(id, toStatus, actorRole, extra) {
       : '09:00:00';
     const newAppointment = {
       appointment_id:
-        dataStore.appointments.length > 0
-          ? Math.max(...dataStore.appointments.map((a) => a.appointment_id)) + 1
-          : 601,
+        maxId(dataStore.appointments, 'appointment_id') + 1 || 601,
       patient_id: request.patient_id,
       doctor_id: request.doctor_id || null,
       appointment_date: request.requested_date,
@@ -294,9 +291,7 @@ function checkIn(id, payload = {}, organizationId, hospitalId, actorRole = 'PRE'
     if (!admission) {
       admission = {
         admission_id:
-          dataStore.admissions.length > 0
-            ? Math.max(...dataStore.admissions.map((a) => a.admission_id)) + 1
-            : 501,
+          maxId(dataStore.admissions, 'admission_id') + 1 || 501,
         patient_id: request.patient_id,
         doctor_id: request.doctor_id || null,
         department: request.department || 'General',
@@ -318,9 +313,7 @@ function checkIn(id, payload = {}, organizationId, hospitalId, actorRole = 'PRE'
     if (!ledger) {
       ledger = {
         ledger_id:
-          dataStore.ledgers.length > 0
-            ? Math.max(...dataStore.ledgers.map((l) => l.ledger_id)) + 1
-            : 801,
+          maxId(dataStore.ledgers, 'ledger_id') + 1 || 801,
         admission_id: admission.admission_id,
         status: 'OPEN',
         organization_id: orgId,
@@ -341,9 +334,7 @@ function checkIn(id, payload = {}, organizationId, hospitalId, actorRole = 'PRE'
 
       const entry = {
         entry_id:
-          dataStore.ledgerEntries.length > 0
-            ? Math.max(...dataStore.ledgerEntries.map((e) => e.entry_id)) + 1
-            : 901,
+          maxId(dataStore.ledgerEntries, 'entry_id') + 1 || 901,
         ledger_id: ledger.ledger_id,
         service_id: serviceId,
         quantity: 1,
@@ -390,9 +381,7 @@ function checkIn(id, payload = {}, organizationId, hospitalId, actorRole = 'PRE'
     if (!bedRequest) {
       bedRequest = {
         bed_request_id:
-          dataStore.bedRequests.length > 0
-            ? Math.max(...dataStore.bedRequests.map((r) => r.bed_request_id)) + 1
-            : 1,
+          maxId(dataStore.bedRequests, 'bed_request_id') + 1 || 1,
         pre_request_id: request.pre_request_id,
         patient_id: Number(request.patient_id),
         ward_id: null,

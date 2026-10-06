@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 // DOCTOR
 function findAllDoctors(predicate = null) {
@@ -16,9 +17,7 @@ function findDoctorById(doctor_id) {
 function createDoctor(doctor) {
   const newDoctor = {
     doctor_id:
-      dataStore.doctors.length > 0
-        ? Math.max(...dataStore.doctors.map((d) => d.doctor_id)) + 1
-        : 401,
+      maxId(dataStore.doctors, 'doctor_id') + 1 || 401,
     name: doctor.name,
     specialization: doctor.specialization || 'General Practitioner',
     department: doctor.department || 'General',

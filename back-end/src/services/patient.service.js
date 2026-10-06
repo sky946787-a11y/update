@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 
 function findAll() {
   return dataStore.patients;
@@ -40,9 +41,7 @@ function generateUhid() {
 function create(patient) {
   const newPatient = {
     patient_id:
-      dataStore.patients.length > 0
-        ? Math.max(...dataStore.patients.map((p) => p.patient_id)) + 1
-        : 201,
+      maxId(dataStore.patients, 'patient_id') + 1 || 201,
     name: patient.name,
     email: patient.email || null,
     phone: patient.phone || null,
@@ -89,11 +88,7 @@ function findInsuranceByPatient(patient_id) {
 
 function createInsurance(insurance) {
   const newIns = {
-    insurance_id:
-      dataStore.patientInsurances.length > 0
-        ? Math.max(...dataStore.patientInsurances.map((i) => i.insurance_id)) +
-          1
-        : 301,
+    insurance_id: maxId(dataStore.patientInsurances, 'insurance_id') + 1 || 301,
     patient_id: Number(insurance.patient_id),
     provider_name: insurance.provider_name,
     policy_number: insurance.policy_number,

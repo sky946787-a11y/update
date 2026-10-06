@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 const patientService = require('./patient.service');
 const activityService = require('./activity.service');
 const organizationService = require('./organization.service');
@@ -132,9 +133,7 @@ function signup(payload) {
 
   const newUser = {
     user_id:
-      dataStore.users.length > 0
-        ? Math.max(...dataStore.users.map((u) => u.user_id)) + 1
-        : 101,
+      maxId(dataStore.users, 'user_id') + 1 || 101,
     name: payload.name,
     email: payload.email,
     password_hash: hashPassword(payload.password),
@@ -152,9 +151,7 @@ function signup(payload) {
   // registration payloads.
   const patient = {
     patient_id:
-      dataStore.patients.length > 0
-        ? Math.max(...dataStore.patients.map((p) => p.patient_id)) + 1
-        : 201,
+      maxId(dataStore.patients, 'patient_id') + 1 || 201,
     user_id: newUser.user_id,
     uhid: patientService.generateUhid(),
     name: payload.name,

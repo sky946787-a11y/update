@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 const { ROLE_ID_TO_NAME, ROLE_NAME_TO_ID } = require('../utils/roles');
 const { hashPassword } = require('../utils/password');
 
@@ -46,9 +47,7 @@ function ensurePermissionCatalog() {
     if (!dataStore.permissions.some((p) => p.permission_code === code)) {
       dataStore.permissions.push({
         permission_id:
-          dataStore.permissions.length > 0
-            ? Math.max(...dataStore.permissions.map((p) => p.permission_id)) + 1
-            : 1,
+          maxId(dataStore.permissions, 'permission_id') + 1 || 1,
         permission_code: code,
         description: `${mode === 'read' ? 'View' : 'Manage'} ${resource} records`,
       });
@@ -69,9 +68,7 @@ function listRoles(organizationId) {
 function createRole(organizationId, payload) {
   const newRole = {
     custom_role_id:
-      dataStore.customRoles.length > 0
-        ? Math.max(...dataStore.customRoles.map((r) => r.custom_role_id)) + 1
-        : 1,
+      maxId(dataStore.customRoles, 'custom_role_id') + 1 || 1,
     organization_id: Number(organizationId),
     role_name: payload.role_name,
     description: payload.description || null,
@@ -213,9 +210,7 @@ function createStaffUser(organizationId, payload) {
 
   const newUser = {
     user_id:
-      dataStore.users.length > 0
-        ? Math.max(...dataStore.users.map((u) => u.user_id)) + 1
-        : 101,
+      maxId(dataStore.users, 'user_id') + 1 || 101,
     name: payload.name,
     email: payload.email,
     password_hash: hashPassword(payload.password),

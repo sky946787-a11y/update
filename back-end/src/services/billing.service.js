@@ -1,6 +1,7 @@
 'use strict';
 
 const dataStore = require('../store/dataStore');
+const { maxId } = require('../utils/maxId');
 const activityService = require('./activity.service');
 
 // SERVICE
@@ -11,9 +12,7 @@ function findAllServices() {
 function createService(service) {
   const newSvc = {
     service_id:
-      dataStore.services.length > 0
-        ? Math.max(...dataStore.services.map((s) => s.service_id)) + 1
-        : 1,
+      maxId(dataStore.services, 'service_id') + 1 || 1,
     service_name: service.service_name,
     category: service.category || 'General',
     base_cost: Number(service.base_cost) || 0,
@@ -55,9 +54,7 @@ function createLedger(ledger) {
 
   const newLedger = {
     ledger_id:
-      dataStore.ledgers.length > 0
-        ? Math.max(...dataStore.ledgers.map((l) => l.ledger_id)) + 1
-        : 801,
+      maxId(dataStore.ledgers, 'ledger_id') + 1 || 801,
     admission_id: admissionId,
     status: ledger.status || 'OPEN',
     organization_id: ledger.organization_id || admission.organization_id || null,
@@ -132,9 +129,7 @@ function createPayment(payment) {
 
   const newPayment = {
     payment_id:
-      dataStore.payments.length > 0
-        ? Math.max(...dataStore.payments.map((p) => p.payment_id)) + 1
-        : 901,
+      maxId(dataStore.payments, 'payment_id') + 1 || 901,
     ledger_id: ledgerId,
     amount_paid: Number(payment.amount_paid),
     payment_mode: payment.payment_mode || 'CASH',
@@ -159,9 +154,7 @@ function createPayment(payment) {
   // Generate receipt for this payment transaction
   const newReceipt = {
     receipt_id:
-      dataStore.receipts.length > 0
-        ? Math.max(...dataStore.receipts.map((r) => r.receipt_id)) + 1
-        : 1,
+      maxId(dataStore.receipts, 'receipt_id') + 1 || 1,
     payment_id: newPayment.payment_id,
     ledger_id: ledger.ledger_id,
     admission_id: admission ? admission.admission_id : null,
@@ -274,9 +267,7 @@ function createDischargeSummary(summary) {
 
   const newSummary = {
     summary_id:
-      dataStore.dischargeSummaries.length > 0
-        ? Math.max(...dataStore.dischargeSummaries.map((s) => s.summary_id)) + 1
-        : 1,
+      maxId(dataStore.dischargeSummaries, 'summary_id') + 1 || 1,
     admission_id: admissionId,
     patient_id: Number(summary.patient_id) || admission.patient_id,
     discharge_notes: summary.discharge_notes || 'Fit for discharge',
@@ -327,9 +318,7 @@ function createLeader(payload) {
 
   const newLeader = {
     leader_id:
-      dataStore.leaders.length > 0
-        ? Math.max(...dataStore.leaders.map((l) => l.leader_id)) + 1
-        : 1,
+      maxId(dataStore.leaders, 'leader_id') + 1 || 1,
     admission_id: admissionId,
     patient_id: payload.patient_id ? Number(payload.patient_id) : admission.patient_id,
     service_id: serviceId,
