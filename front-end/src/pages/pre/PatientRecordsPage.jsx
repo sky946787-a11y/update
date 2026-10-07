@@ -84,10 +84,6 @@ export default function PatientRecordsPage() {
         insurance: pInsur,
         activeBed,
         isInpatient: activeInpatient,
-        /* OLD: pendingBedRequest also checked old visit_type values ('Admit'/'Inpatient').
-           The new workflow uses the Bed Request table (pendingBedPatientIds) exclusively.
-        pendingBedRequest: pendingBedPatientIds.has(p.patient_id) || pPres.some((pr) => pr.status === 'APPROVED' && (pr.visit_type === 'Admit' || pr.visit_type === 'Inpatient')),
-        */
         pendingBedRequest: pendingBedPatientIds.has(p.patient_id),
         hasDischarged: !activeInpatient && (pPres.some((pr) => pr.status === 'DISCHARGED') || pAdms.some((a) => a.status === 'DISCHARGED')),
         hasFollowUp: pPres.some((pr) => pr.status === 'CONSULTATION_DONE' && pr.visit_type === 'Follow-Up'),

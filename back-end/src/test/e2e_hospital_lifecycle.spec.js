@@ -123,7 +123,7 @@ describe('E2E Hospital Patient Lifecycle & Multi-Tenancy Pipeline', () => {
 
     const updated = preRequestService.transition(preRequestId, 'APPROVED', 'PRE');
     expect(updated.status).toBe('APPROVED');
-    expect(updated.hom_status).toBe('Awaiting visit type / bed request');
+    expect(updated.hom_status).toBe('Awaiting PRE action / bed request');
   });
 
   it('Step 4: PRE submits a bed allocation request', () => {

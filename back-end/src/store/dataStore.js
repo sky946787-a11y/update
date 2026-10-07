@@ -3996,7 +3996,7 @@ const dataStore = {
       "requested_date": null,
       "requested_time": null,
       "status": "APPROVED",
-      "hom_status": "Awaiting visit type / bed request",
+      "hom_status": "Awaiting PRE action / bed request",
       "bed_id": null,
       "reject_reason": null,
       "created_by": 105,

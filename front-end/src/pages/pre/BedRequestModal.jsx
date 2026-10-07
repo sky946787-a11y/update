@@ -20,26 +20,30 @@ function autoMatchWard(wards, department) {
 }
 
 export default function BedRequestModal({ request, wards, onClose, onSubmitted }) {
-  const [wardId, setWardId] = useState('');
+  if (!request) return null;
+  return (
+    <BedRequestForm
+      key={request.pre_request_id}
+      request={request}
+      wards={wards}
+      onClose={onClose}
+      onSubmitted={onSubmitted}
+    />
+  );
+}
+
+function BedRequestForm({ request, wards, onClose, onSubmitted }) {
+  const [wardId, setWardId] = useState(() => autoMatchWard(wards, request.department));
   const [priority, setPriority] = useState('NORMAL');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setWardId(request ? autoMatchWard(wards, request.department) : '');
-    setPriority('NORMAL');
-    setSubmitting(false);
-  }, [request, wards]);
-
-  useEffect(() => {
-    if (!request) return undefined;
     function onKeydown(e) {
       if (e.key === 'Escape') onClose();
     }
     document.addEventListener('keydown', onKeydown);
     return () => document.removeEventListener('keydown', onKeydown);
-  }, [request, onClose]);
-
-  if (!request) return null;
+  }, [onClose]);
 
   const selectedWard = wardId ? wards.find((w) => w.ward_id === Number(wardId)) : null;
 

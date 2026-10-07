@@ -3,75 +3,43 @@
 import { useState } from 'react';
 import { api } from '../../api/index.js';
 import { toast } from '../../components/feedback/feedback.js';
-import { sortDoctorsForDepartment, to12Hour, to24Hour } from './preHelpers.js';
+import { sortDoctorsForDepartment, to24Hour } from './preHelpers.js';
 import PrePopup, { DoctorOptions } from './PrePopup.jsx';
 
-/**
- * Check whether a doctor is available for a given date + 24-hour time string.
- *
- * Logic:
- *  - If the doctor has no availability slots configured at all → PASS (system
- *    is optional; don't block doctors who haven't entered their schedule).
- *  - If slots exist but NONE fall on this date → PASS (the doctor may work on
- *    unscheduled days; only block when an explicit slot says they're busy).
- *  - If a slot exists on this date but it does NOT cover the requested time →
- *    BLOCK (the doctor is explicitly not available in that window).
- *  - If the doctor is already booked within 30 min of the slot → BLOCK.
- *
- * Returns { available: boolean, reason: string|null }.
- */
 async function checkDoctorAvailability(doctorId, date, time24) {
-  // Fetch in parallel — both calls are read-only and independent.
   const [slots, allAppointments] = await Promise.all([
-    api.doctors.availabilityForDoctor(doctorId).catch(() => []),
-    api.appointments.list().catch(() => []),
+    api.doctors.availabilityForDoctor(doctorId),
+    api.appointments.list(),
   ]);
 
   const allSlots = slots || [];
+  const slotsOnDate = allSlots.filter((s) => String(s.available_date || '').slice(0, 10) === date);
 
-  // ── 1. Availability slot check ──────────────────────────────────────────
-  // Only enforce the slot constraint when at least one slot exists for this
-  // doctor on this date. If no slot is configured for the date, we treat the
-  // doctor as available (the schedule system is optional).
-  //
-  // FIX: status comparison is case-insensitive — the data store has "Available"
-  //      (mixed case), not "AVAILABLE", so === 'AVAILABLE' always missed every
-  //      slot and incorrectly blocked every approval for dated requests.
-  const slotsOnDate = allSlots.filter(
-    (s) => s.available_date === date &&
-           String(s.status).toUpperCase() === 'AVAILABLE',
-  );
-
-  // Convert "HH:MM" or "HH:MM:SS" strings to minutes since midnight.
   function toMinutes(t) {
-    if (!t) return -1;
-    const parts = String(t).split(':');
-    return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
+    if (!t) return null;
+    const parts = String(t).trim().split(':');
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1] || '0', 10);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+    return hours * 60 + minutes;
   }
 
-  if (slotsOnDate.length > 0) {
-    // Slots exist for this date — enforce the window.
-    const reqMins = toMinutes(time24);
-    const coveredBySlot = slotsOnDate.some((s) => {
-      const start = toMinutes(s.start_time);
-      const end = toMinutes(s.end_time);
-      return start !== -1 && end !== -1 && reqMins >= start && reqMins <= end;
-    });
+  const reqMins = toMinutes(time24);
+  const coveredBySlot = slotsOnDate.some((s) => {
+    if (String(s.status || 'AVAILABLE').toUpperCase() !== 'AVAILABLE') return false;
+    const start = toMinutes(s.start_time);
+    const end = toMinutes(s.end_time);
+    return start !== null && end !== null && reqMins !== null && reqMins >= start && reqMins < end;
+  });
 
-    if (!coveredBySlot) {
-      return {
-        available: false,
-        reason: 'Doctor is not available at this selected time. Please select another time slot.',
-      };
-    }
+  if (slotsOnDate.length > 0 && !coveredBySlot) {
+    return {
+      available: false,
+      reason: 'Doctor is not available at this time. Please select another time slot.',
+    };
   }
-  // If slotsOnDate.length === 0, fall through — treat as available.
 
-  // ── 2. Booking conflict check ────────────────────────────────────────────
-  // An appointment is a conflict when it matches doctor + date + time and
-  // is not cancelled/completed.
   const docId = Number(doctorId);
-  const reqMins2 = toMinutes(time24);
   const conflict = (allAppointments || []).some((appt) => {
     if (Number(appt.doctor_id) !== docId) return false;
     if (appt.status === 'CANCELLED' || appt.status === 'COMPLETED') return false;
@@ -80,13 +48,13 @@ async function checkDoctorAvailability(doctorId, date, time24) {
     if (apptDate !== date) return false;
 
     const apptMins = toMinutes((appt.appointment_time || '').slice(0, 5));
-    return apptMins !== -1 && Math.abs(apptMins - reqMins2) < 30;
+    return apptMins !== null && reqMins !== null && Math.abs(apptMins - reqMins) < 30;
   });
 
   if (conflict) {
     return {
       available: false,
-      reason: 'Doctor is already booked at this time. Please select another time slot.',
+      reason: 'Doctor is not available at this time. Please select another time slot.',
     };
   }
 
@@ -148,30 +116,27 @@ export default function ApprovePopup({ request, doctors, onClose, onDone }) {
     // Use the patient's requested date for the slot check.
     const date = (request.requested_date || '').slice(0, 10);
 
-    // Both date and time must be known to run the check.
-    if (date && time24) {
-      setChecking(true);
-      let checkResult;
-      try {
-        checkResult = await checkDoctorAvailability(doctorId, date, time24);
-      } catch {
-        // If the availability API fails, allow the approval to proceed rather
-        // than silently blocking the user. The backend will enforce its own
-        // constraints anyway.
-        checkResult = { available: true, reason: null };
-      } finally {
-        setChecking(false);
-      }
+    if (!date || !time24) {
+      setAvailError('Doctor is not available at this time. Please select another time slot.');
+      return;
+    }
 
-      if (!checkResult.available) {
-        // Show the reason inline so the user can adjust the time without
-        // closing and reopening the popup.
-        setAvailError(
-          checkResult.reason ||
-          'Doctor is not available at this selected time. Please select another time slot.',
-        );
-        return; // Block approval — do NOT call the API.
-      }
+    setChecking(true);
+    let checkResult;
+    try {
+      checkResult = await checkDoctorAvailability(doctorId, date, time24);
+    } catch (err) {
+      checkResult = {
+        available: false,
+        reason: err.message || 'Doctor is not available at this time. Please select another time slot.',
+      };
+    } finally {
+      setChecking(false);
+    }
+
+    if (!checkResult.available) {
+      setAvailError(checkResult.reason || 'Doctor is not available at this time. Please select another time slot.');
+      return;
     }
 
     // ── Doctor is available — proceed with normal approval ──
@@ -291,7 +256,7 @@ export default function ApprovePopup({ request, doctors, onClose, onDone }) {
                 fontSize: 13,
                 fontWeight: 500,
               }}>
-                ⚠ {availError}
+                {availError}
               </div>
             )}
           </div>

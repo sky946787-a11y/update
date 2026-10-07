@@ -47,12 +47,12 @@ router.delete(
 // Availability
 router.get(
   '/availability/all',
-  authorize(['ADMIN', 'SUPER_USER'], 'doctor', 'read'),
+  authorize(['ADMIN', 'PRE', 'SUPER_USER'], 'doctor', 'read'),
   controller.findAllAvailabilities,
 );
 router.get(
   '/:id/availability',
-  authorize(['ADMIN', 'SUPER_USER'], 'doctor', 'read'),
+  authorize(['ADMIN', 'PRE', 'SUPER_USER'], 'doctor', 'read'),
   controller.findAvailabilityByDoctor,
 );
 router.post(

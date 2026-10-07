@@ -53,13 +53,12 @@ const TRANSITIONS = {
   },
 };
 
-// APPROVED -> ADMITTED also happens via HOM bed allocation, for the
-// visitType: 'Admit' path (no EMERGENCY stop in between).
+// APPROVED -> ADMITTED also happens via HOM bed allocation.
 TRANSITIONS.APPROVED.ADMITTED = ['HOM'];
 
 const HOM_STATUS_BY_STATUS = {
   PENDING: 'Awaiting PRE review',
-  APPROVED: 'Awaiting visit type / bed request',
+  APPROVED: 'Awaiting PRE action / bed request',
   REJECTED: 'Closed — rejected by PRE',
   CONSULTATION_DONE: 'Closed — consultation complete',
   EMERGENCY: 'Awaiting HOM bed allocation',

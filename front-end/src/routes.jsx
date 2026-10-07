@@ -5,17 +5,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from './App.jsx';
 import RequireModule, { RequirePlatformUser } from './auth/RequireModule.jsx';
 
-/**
- * The route table from section 2.2 of react-migration-plan.md.
- *
- * Paths keep their legacy `.html` suffixes exactly (DEC-1), so every existing
- * link and bookmark still resolves and no URL in the app changes. The dev and
- * preview servers need the rewrite in vite.config.js for these to survive a
- * hard reload.
- *
- * Portal layouts are lazy so each portal's stylesheet lands in its own CSS
- * chunk and only one portal's CSS is live at a time (DEC-5).
- */
+
 
 const LandingPage = lazy(() => import('./pages/public/LandingPage.jsx'));
 const LoginPage = lazy(() => import('./pages/public/LoginPage.jsx'));
@@ -135,8 +125,6 @@ export const router = createBrowserRouter([
           { path: '/PRE/pages/rejected.html', element: L(<PreRejectedPage />) },
           { path: '/PRE/pages/admitted.html', element: L(<PreAdmittedPage />) },
           { path: '/PRE/pages/discharge.html', element: L(<PreDischargePage />) },
-          // OLD: /PRE/pages/emergency.html used to render EmergencyPage.
-          // Emergency has been REMOVED from the PRE workflow. Redirect to dashboard to avoid broken URLs.
           { path: '/PRE/pages/emergency.html', element: <Navigate to="/PRE/pages/PRE.html" replace /> },
           { path: '/PRE/pages/patient-records.html', element: L(<PrePatientRecordsPage />) },
           { path: '/PRE/pages/doctor.html', element: L(<PreDoctorRosterPage />) },

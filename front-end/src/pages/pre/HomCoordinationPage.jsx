@@ -4,17 +4,6 @@ import { api } from '../../api/index.js';
 import { useApi } from '../../hooks/useApi.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 
-/*
- * REMOVED: toast, joinPreRequestsWithPatients, doctors API call, doctorsById,
- * bedRequestByPreRequestId, dischargeList, finalizeDischarge, and the entire
- * "2. Inpatient Discharge Clearance & Final Release" card.
- *
- * That card was a duplicate of the Discharge Approval section already built
- * in the PRE Dashboard (PreDashboardPage.jsx / DischargePage.jsx). The
- * canonical Discharge Approval workflow remains fully functional there.
- * Only the Bed Allocation Queue (section 1) is kept here.
- */
-
 /** PRE read-only coordination view for HOM bed assignment status. */
 export default function HomCoordinationPage() {
   useDocumentTitle('HOM Coordination - Federico PRE');
@@ -57,7 +46,6 @@ export default function HomCoordinationPage() {
         </div>
       </div>
 
-      {/* ── Bed Allocation Queue (PENDING + ALLOCATED + DENIED) ── */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Inpatient Bed Allocation Queue</h3>
@@ -88,7 +76,6 @@ export default function HomCoordinationPage() {
                     : r.priority === 'HIGH'   ? pill('#fef3c7', '#fde68a', '#b45309', 700, 'High')
                     : pill('#f8fafc', '#e2e8f0', '#475569', 600, 'Normal');
 
-                  // Bed column — real bed number for ALLOCATED, N/A for DENIED, — for PENDING
                   let bedCell = <span style={{ color: 'var(--color-muted-fg)', fontSize: 12 }}>—</span>;
                   if (r.status === 'ALLOCATED' && r.bed_id && d.bedsById[r.bed_id]) {
                     bedCell = <strong style={{ color: 'var(--md-primary, #0f766e)' }}>{d.bedsById[r.bed_id].bed_number}</strong>;
@@ -96,7 +83,6 @@ export default function HomCoordinationPage() {
                     bedCell = <span style={{ color: '#6b7280', fontStyle: 'italic' }}>N/A</span>;
                   }
 
-                  // Status badge
                   let statusBadge;
                   if (r.status === 'ALLOCATED') {
                     statusBadge = <span className="status confirmed" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', fontSize: 11, padding: '3px 8px', borderRadius: 12 }}>Allocated</span>;

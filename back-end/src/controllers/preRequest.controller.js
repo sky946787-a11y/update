@@ -2,6 +2,7 @@
 
 const preRequestService = require('../services/preRequest.service');
 const billingService = require('../services/billing.service');
+const doctorService = require('../services/doctor.service');
 const dataStore = require('../store/dataStore');
 const { sendResult } = require('../utils/sendResult');
 const { forbidsOtherPatient } = require('../utils/patientOwnership');
@@ -128,6 +129,20 @@ function update(req, res) {
         return res
           .status(409)
           .json({ message: blockReason, error: 'Conflict', statusCode: 409 });
+      }
+    }
+
+    if (requestedStatus === 'APPROVED') {
+      const doctorId = req.body.doctor_id || existing.doctor_id;
+      const requestedDate = req.body.requested_date || existing.requested_date;
+      const requestedTime = req.body.requested_time || existing.requested_time;
+      const availability = doctorService.isDoctorAvailableAt(doctorId, requestedDate, requestedTime);
+      if (!availability.available) {
+        return res.status(409).json({
+          message: availability.message,
+          error: 'Conflict',
+          statusCode: 409,
+        });
       }
     }
 

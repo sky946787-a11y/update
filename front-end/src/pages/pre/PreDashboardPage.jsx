@@ -12,24 +12,18 @@ import BedRequestModal from './BedRequestModal.jsx';
 /**
  * Ported from PRE/pages/PRE.html + PRE.js.
  *
- * NEW WORKFLOW: Each approved patient row now shows two action buttons:
- *   - Follow Up: completes the visit as an OPD follow-up (normal discharge flow).
- *   - Admitted: opens the existing Bed Request form → Dispatch → Pending → HOM assigns bed → ADMITTED.
- *
- * OLD WORKFLOW (commented out — no longer active):
- * The visit-type <select> per row called POST /pre-requests/:id/check-in, which
- * created the OPD ledger or dispatched the bed request based on the selected type.
+ * Each approved patient row shows the two PRE decisions that remain in the
+ * workflow: Follow Up or Admitted.
  */
 export default function PreDashboardPage() {
   useDocumentTitle('Dashboard');
   const [bedRequestId, setBedRequestId] = useState(null);
 
   const { data, reload } = useApi(async () => {
-    const [preRequests, patients, doctors, admissions, wards, bedRequests] = await Promise.all([
+    const [preRequests, patients, doctors, wards, bedRequests] = await Promise.all([
       api.preRequests.list().catch(() => []),
       api.patients.list().catch(() => []),
       api.doctors.list().catch(() => []),
-      api.admissions.list().catch(() => []),
       api.wards.list().catch(() => []),
       api.wards.bedRequests.list().catch(() => []),
     ]);
@@ -38,19 +32,7 @@ export default function PreDashboardPage() {
     (doctors || []).forEach((d) => (doctorsById[d.doctor_id] = d));
     const joined = joinPreRequestsWithPatients(preRequests, patients, doctorsById);
 
-    const admissionById = {};
-    (admissions || []).forEach((a) => (admissionById[a.admission_id] = a));
-
-    const rows = joined.map((r) => {
-      const adm = r.admission_id
-        ? admissionById[r.admission_id]
-        : (admissions || []).find(
-            (a) => a.patient_id === r.patient_id && (a.visit_type === 'OPD' || a.appointment_id === r.appointment_id),
-          );
-      return { ...r, isPaid: Boolean(adm && (adm.status === 'PAYMENT_CONFIRMED' || adm.bills_cleared === true)) };
-    });
-
-    return { rows, all: preRequests || [], wards: wards || [], bedRequests: bedRequests || [] };
+    return { rows: joined, all: preRequests || [], wards: wards || [], bedRequests: bedRequests || [] };
   }, []);
 
   const rows = data?.rows || [];

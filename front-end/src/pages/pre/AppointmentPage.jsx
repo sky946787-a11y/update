@@ -54,7 +54,6 @@ export default function AppointmentPage() {
   const [doctorId, setDoctorId] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('10:00 AM');
-  const [visitType, setVisitType] = useState('Consultation');
   const [reason, setReason] = useState('');
 
   const { data, reload } = useApi(async () => {
@@ -101,7 +100,6 @@ export default function AppointmentPage() {
     setDoctorId('');
     setDate('');
     setTime('10:00 AM');
-    setVisitType('Consultation');
     setReason('');
     setPickerOpen(false);
   }
@@ -166,7 +164,7 @@ export default function AppointmentPage() {
         patient_id: selected.realId,
         department,
         doctor_id: doctorId ? Number(doctorId) : null,
-        visit_type: visitType,
+        visit_type: 'Consultation',
         requested_date: date,
         appointment_time: time,
         status: 'APPROVED',
@@ -308,21 +306,10 @@ export default function AppointmentPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div className="appointment-form-group">
-                <label className="emergency-form-label" htmlFor="visitType">Encounter Type *</label>
-                <select id="visitType" className="emergency-form-control" value={visitType} onChange={(e) => setVisitType(e.target.value)}>
-                  <option value="Consultation">Consultation (OPD)</option>
-                  <option value="Admit">Admission Referral (IPD)</option>
-                  <option value="Follow-Up">Follow-Up Review</option>
-                </select>
-              </div>
-
-              <div className="appointment-form-group">
-                <label className="emergency-form-label" htmlFor="appointmentReason">Chief Complaint / Notes</label>
-                <input type="text" id="appointmentReason" placeholder="e.g. Routine checkup, follow-up..." className="emergency-form-control"
-                  value={reason} onChange={(e) => setReason(e.target.value)} />
-              </div>
+            <div className="appointment-form-group">
+              <label className="emergency-form-label" htmlFor="appointmentReason">Chief Complaint / Notes</label>
+              <input type="text" id="appointmentReason" placeholder="e.g. Routine checkup, follow-up..." className="emergency-form-control"
+                value={reason} onChange={(e) => setReason(e.target.value)} />
             </div>
 
             <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
